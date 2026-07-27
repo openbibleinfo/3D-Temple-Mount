@@ -1,0 +1,645 @@
+<title>Herod's Temple, Jerusalem—c. AD 30</title>
+
+<style>
+/* ------------------------------------------------------------------ *
+ *  Herod's Temple Mount—interface chrome
+ * ------------------------------------------------------------------ */
+:root{
+  --ink:#f2ece1;
+  --ink-dim:#b9b0a0;
+  --ink-faint:#8b8375;
+  --panel:rgba(18,16,13,.82);
+  --panel-solid:#151310;
+  --edge:rgba(214,196,158,.20);
+  --edge-strong:rgba(214,196,158,.42);
+  --gold:#d8b667;
+  --gold-bright:#f0d493;
+  --stone:#c8b28a;
+  --accent:#8fb4c9;
+  --shadow:0 10px 34px rgba(0,0,0,.55);
+  --r:10px;
+  --knob:#b9b0a0;          /* slider/toggle handle */
+  --pinbg:rgba(18,16,13,.74);
+  --thumbRing:#1a1712;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  /* no serif and no small-caps anywhere: the display role is the same family
+     at a heavier weight and slightly negative tracking */
+  --display:var(--sans);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;background:#0b0a08}
+body{
+  font:400 14px/1.55 var(--sans);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior:none;
+  touch-action:none;
+}
+/* keyboard focus has to be visible on both grounds */
+:where(button,input,[tabindex]):focus-visible{
+  outline:2px solid var(--gold);
+  outline-offset:2px;
+  border-radius:6px;
+}
+#gl:focus-visible{outline:none}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    transition-duration:.01ms !important;
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+  }
+}
+
+#stage{position:fixed;inset:0}
+#gl{display:block;width:100%;height:100%;touch-action:none}
+
+/* ---------- loading ---------- */
+#boot{
+  position:fixed;inset:0;z-index:90;display:grid;place-items:center;
+  /* THE SKY, because that is what it hands you. Bright was already right—the
+     dark boot matched the panels and then gave you a sunlit hillside, which read
+     as the lights coming on—but beige meant the screen still changed color at
+     the handover. These two are sampled off the rendered sky at noon: #83a0c5 at
+     the zenith, #bcc2cc at the horizon. The glow sits at the bottom because that
+     is where the sky is palest. */
+  background:radial-gradient(120% 100% at 50% 100%,#c2c8d1,#87a2c6 74%);
+  color:#23334a;
+  transition:opacity .7s ease;
+}
+#boot.gone{opacity:0;pointer-events:none}
+#boot .inner{text-align:center;max-width:30rem;padding:2rem}
+#boot h1{
+  font:600 clamp(1.45rem,4vw,2.2rem)/1.18 var(--display);
+  letter-spacing:-.012em;margin:0 0 .4rem;
+  color:inherit;
+}
+#boot p{margin:.2rem 0;color:inherit;font-size:.86rem}
+#boot .credit{font-size:.76rem;margin-top:.9rem}
+#boot .bar{
+  margin:1.6rem auto 0;width:min(20rem,70vw);height:2px;
+  background:rgba(26,42,66,.18);overflow:hidden;border-radius:2px;
+}
+#boot .bar i{display:block;height:100%;width:0%;background:#9c7c34;transition:width .3s ease}
+#boot .step{margin-top:.75rem;font:400 .74rem/1.4 var(--sans);color:inherit;letter-spacing:.01em}
+
+/* ---------- generic panel ---------- */
+.panel{
+  position:fixed;z-index:20;
+  background:var(--panel);
+  -webkit-backdrop-filter:blur(14px) saturate(1.2);
+  backdrop-filter:blur(14px) saturate(1.2);
+  border:1px solid var(--edge);
+  border-radius:var(--r);
+  box-shadow:var(--shadow);
+}
+
+/* ---------- title ---------- */
+#title{top:14px;left:14px;padding:.7rem .95rem .75rem;max-width:22rem}
+#title h1{
+  margin:0;font:600 1.04rem/1.3 var(--display);letter-spacing:-.008em;
+  color:var(--gold-bright);
+}
+#title .sub{
+  margin-top:.16rem;font:400 .735rem/1.4 var(--sans);
+  letter-spacing:.01em;color:var(--ink-faint);
+}
+
+/* ---------- side rail ---------- */
+#rail{
+  top:14px;right:14px;width:20.5rem;max-width:calc(100vw - 28px);
+  max-height:calc(100vh - 28px);display:flex;flex-direction:column;
+  overflow:hidden;
+}
+#rail .tabs{
+  display:flex;gap:2px;padding:5px;border-bottom:1px solid var(--edge);
+  flex:0 0 auto;
+}
+#rail .tabs button{
+  flex:1;appearance:none;border:0;border-radius:6px;cursor:pointer;
+  background:transparent;color:var(--ink-faint);
+  font:500 .805rem/1 var(--sans);letter-spacing:0;
+  padding:.52rem .2rem;transition:background .16s,color .16s;
+}
+#rail .tabs button:hover{color:var(--ink-dim);background:rgba(214,196,158,.07)}
+#rail .tabs button[aria-selected=true]{background:rgba(214,196,158,.15);color:var(--gold-bright)}
+#rail .body{overflow-y:auto;overscroll-behavior:contain;padding:.25rem 0 .5rem;scrollbar-width:thin}
+#rail .body::-webkit-scrollbar{width:8px}
+#rail .body::-webkit-scrollbar-thumb{background:rgba(214,196,158,.18);border-radius:8px}
+.tabpage{display:none;padding:.55rem .8rem}
+.tabpage.on{display:block}
+
+h2.sec{
+  margin:.9rem 0 .42rem;font:600 .805rem/1.25 var(--display);
+  letter-spacing:-.004em;color:var(--gold);
+}
+h2.sec:first-child{margin-top:.3rem}
+.hint{font-size:.775rem;color:var(--ink-faint);margin:.1rem 0 .55rem}
+
+/* ---------- structure list ---------- */
+.zone{margin-bottom:.5rem}
+.zone > .zh{
+  font:600 .735rem/1.3 var(--sans);letter-spacing:0;
+  color:var(--ink-faint);padding:.45rem .1rem .28rem;
+}
+.item{
+  display:flex;align-items:baseline;gap:.5rem;width:100%;
+  appearance:none;border:0;background:transparent;cursor:pointer;
+  text-align:left;color:var(--ink-dim);
+  font:400 .82rem/1.35 var(--sans);
+  padding:.34rem .5rem;border-radius:6px;
+  border-left:2px solid transparent;
+  transition:background .14s,color .14s,border-color .14s;
+}
+.item:hover{background:rgba(214,196,158,.09);color:var(--ink)}
+.item.active{background:rgba(216,182,103,.16);color:var(--gold-bright);border-left-color:var(--gold)}
+/* a small square, not a number: the structure list has no running order,
+   and numbering it would imply one */
+.item .n{
+  flex:0 0 .5rem;height:.5rem;margin-top:.42rem;border-radius:1px;
+  background:var(--edge-strong);transition:background .14s;
+}
+.item.active .n{background:var(--gold)}
+
+/* ---------- toggles ---------- */
+.tog{
+  display:flex;align-items:center;gap:.6rem;cursor:pointer;
+  padding:.36rem .3rem;border-radius:6px;font-size:.83rem;color:var(--ink-dim);
+}
+.tog:hover{background:rgba(214,196,158,.07);color:var(--ink)}
+.tog input{appearance:none;margin:0;flex:0 0 30px;height:17px;border-radius:9px;
+  background:rgba(255,255,255,.13);border:1px solid var(--edge);position:relative;cursor:pointer;
+  transition:background .18s,border-color .18s}
+.tog input::after{content:"";position:absolute;top:1px;left:1px;width:13px;height:13px;
+  border-radius:50%;background:var(--knob);transition:transform .18s,background .18s}
+.tog input:checked{background:rgba(216,182,103,.5);border-color:var(--gold)}
+.tog input:checked::after{transform:translateX(13px);background:var(--gold-bright)}
+.tog .lb{flex:1}
+.tog .kbd{font:400 .62rem/1 var(--sans);color:var(--ink-faint);
+  border:1px solid var(--edge);border-radius:4px;padding:.18rem .3rem}
+
+/* ---------- sliders ---------- */
+.slide{padding:.4rem .3rem .55rem}
+.slide label{display:flex;justify-content:space-between;font-size:.78rem;color:var(--ink-dim);margin-bottom:.35rem}
+.slide label b{font:400 .72rem/1 var(--sans);color:var(--gold)}
+input[type=range]{
+  appearance:none;width:100%;height:3px;border-radius:3px;
+  background:rgba(214,196,158,.22);outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  appearance:none;width:14px;height:14px;border-radius:50%;
+  background:var(--gold);border:2px solid var(--thumbRing);cursor:pointer;
+}
+input[type=range]::-moz-range-thumb{
+  width:12px;height:12px;border-radius:50%;background:var(--gold);
+  border:2px solid var(--thumbRing);cursor:pointer;
+}
+
+/* ---------- passage guide ---------- */
+.conflegend{
+  display:flex;flex-wrap:wrap;gap:.1rem .8rem;margin:.1rem 0 .6rem;
+  font:400 .69rem/1.5 var(--sans);color:var(--ink-faint);
+}
+.conflegend span{display:flex;align-items:center;gap:.32rem}
+.conflegend i{width:.5rem;height:.5rem;border-radius:50%;display:block}
+.c-explicit{background:var(--gold)}
+.c-probable{background:var(--stone)}
+.c-court{background:var(--ink-faint)}
+.c-disputed{background:var(--accent)}
+/* Reference and title, and the confidence carried as the dot the legend just
+   above explains. The note itself is on the info card. */
+.passage .ref{
+  display:flex;align-items:center;gap:.34rem;
+  font:500 .69rem/1.35 var(--sans);letter-spacing:.015em;
+  color:var(--gold);margin-bottom:.04rem;
+}
+.passage .ref i{width:.45rem;height:.45rem;border-radius:50%;display:block;flex:none}
+/* the same marking, spelled out, where there is room for it */
+.pnote{
+  margin:0 0 .55rem;padding:0 0 .55rem;
+  border-bottom:1px solid rgba(214,196,158,.14);
+  font-size:.79rem;line-height:1.5;color:var(--ink-dim);
+}
+.pnote b{color:var(--gold);font-weight:500}
+.pcf{
+  display:flex;align-items:center;gap:.32rem;margin-bottom:.24rem;
+  font:400 .665rem/1 var(--sans);color:var(--ink-faint);
+}
+.pcf i{width:.45rem;height:.45rem;border-radius:50%;display:block;flex:none}
+
+/* ---------- the passage guide ---------- */
+.passage{
+  display:block;width:100%;text-align:left;appearance:none;cursor:pointer;
+  background:transparent;border:1px solid transparent;border-radius:8px;
+  padding:.38rem .6rem;margin-bottom:.1rem;color:var(--ink-dim);
+  transition:background .15s,border-color .15s;
+}
+.passage:hover{background:rgba(214,196,158,.08);border-color:var(--edge)}
+.passage.active{background:rgba(216,182,103,.14);border-color:var(--edge-strong)}
+.passage .t{display:block;font:500 .84rem/1.3 var(--sans);color:var(--ink)}
+.passage.active .t{color:var(--gold-bright)}
+
+/* ---------- reading copy ---------- */
+.prose{font-size:.815rem;line-height:1.62;color:var(--ink-dim)}
+.prose p{margin:.5rem 0}
+.prose .about-links a{color:var(--gold-bright)}
+.prose b,.prose strong{color:var(--ink);font-weight:600}
+.prose em{color:var(--stone)}
+.prose ul{margin:.4rem 0;padding-left:1.1rem}
+.prose li{margin:.22rem 0}
+.prose code{font:400 .76rem/1.4 var(--sans);color:var(--gold);background:rgba(216,182,103,.1);
+  padding:.06rem .28rem;border-radius:3px}
+.cite{display:block;font:400 .72rem/1.45 var(--sans);color:var(--ink-faint);margin-top:.3rem}
+/* Era letters as small capitals. Two full-height capitals in the middle of a
+   sentence shout; `all-small-caps` folds them to the x-height of the line and
+   keeps the text selectable and searchable as AD. */
+.sc{font-variant-caps:all-small-caps;letter-spacing:.045em}
+.rule{height:1px;background:var(--edge);margin:.8rem 0}
+.prose table.dims,#info table.dims{display:block;overflow-x:auto}
+table.dims{width:100%;border-collapse:collapse;font-size:.775rem;margin:.35rem 0;
+  font-variant-numeric:tabular-nums}
+table.dims th,table.dims td{text-align:left;padding:.24rem .35rem;border-bottom:1px solid rgba(214,196,158,.11)}
+table.dims th{color:var(--ink-faint);font-weight:600;font-size:.735rem;letter-spacing:0}
+table.dims td:last-child{text-align:right;color:var(--gold);white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+
+/* ---------- info card (on pick) ---------- */
+#info{
+  left:14px;bottom:74px;width:23rem;max-width:calc(100vw - 28px);
+  max-height:52vh;display:none;flex-direction:column;overflow:hidden;
+}
+#info.on{display:flex}
+#info .ih{
+  display:flex;align-items:flex-start;gap:.5rem;
+  padding:.7rem .85rem .5rem;border-bottom:1px solid var(--edge);
+}
+#info .ih .tt{flex:1}
+#info .ih h3{margin:0;font:600 1.02rem/1.3 var(--display);letter-spacing:-.008em;
+  color:var(--gold-bright)}
+#info .ih .k{
+  margin-top:.14rem;font:400 .70rem/1.35 var(--sans);letter-spacing:.01em;
+  color:var(--ink-faint);
+}
+#info .x{
+  appearance:none;border:0;background:transparent;cursor:pointer;
+  color:var(--ink-faint);font-size:1.1rem;line-height:1;padding:.15rem .25rem;border-radius:5px;
+}
+#info .x:hover{color:var(--ink);background:rgba(255,255,255,.08)}
+#info .ib{padding:.6rem .85rem .85rem;overflow-y:auto;scrollbar-width:thin}
+#info .ib::-webkit-scrollbar{width:7px}
+#info .ib::-webkit-scrollbar-thumb{background:rgba(214,196,158,.18);border-radius:7px}
+
+/* ---------- bottom dock ---------- */
+#dock{
+  left:50%;transform:translateX(-50%);bottom:14px;
+  display:flex;align-items:center;gap:.15rem;padding:5px;
+}
+#dock .seg{display:flex;gap:2px;padding-right:.3rem;margin-right:.15rem;border-right:1px solid var(--edge)}
+#dock .seg:last-of-type{border-right:0;margin-right:0;padding-right:0}
+#dock button{
+  appearance:none;border:0;background:transparent;cursor:pointer;
+  color:var(--ink-dim);border-radius:6px;padding:.42rem .62rem;
+  font:500 .745rem/1 var(--sans);letter-spacing:.02em;white-space:nowrap;
+  transition:background .15s,color .15s;
+}
+#dock button:hover{background:rgba(214,196,158,.1);color:var(--ink)}
+#dock button[aria-pressed=true]{background:rgba(216,182,103,.2);color:var(--gold-bright)}
+#dock .ico{font-size:.9rem;margin-right:.28rem;opacity:.85}
+
+/* ---------- HUD: compass, scale, readout ---------- */
+#hud{position:fixed;z-index:15;left:14px;bottom:14px;display:flex;align-items:flex-end;gap:.7rem;pointer-events:none}
+#compass{
+  width:46px;height:46px;border-radius:50%;
+  background:var(--panel);border:1px solid var(--edge);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  position:relative;box-shadow:var(--shadow);
+}
+#compass .needle{position:absolute;inset:0;transition:transform .1s linear}
+#compass svg{width:100%;height:100%;display:block}
+#scalebar{
+  background:var(--panel);border:1px solid var(--edge);border-radius:7px;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  padding:.3rem .5rem .35rem;box-shadow:var(--shadow);
+}
+#scalebar .track{height:5px;border-left:1px solid var(--stone);border-right:1px solid var(--stone);
+  border-bottom:1px solid var(--stone);width:74px;transition:width .12s}
+#scalebar .lb{font:400 .66rem/1.3 var(--sans);color:var(--ink-dim);text-align:center;margin-top:.15rem}
+
+/* ---------- uncluttered mode ---------- */
+body.uiHidden #title, body.uiHidden #rail, body.uiHidden #dock,
+body.uiHidden #info,  body.uiHidden #hud,
+body.uiHidden #pins,  body.uiHidden #toast { display:none !important }
+
+#uiShow{
+  position:fixed;z-index:30;right:14px;bottom:14px;display:none;
+  appearance:none;cursor:pointer;
+  background:var(--panel);border:1px solid var(--edge);border-radius:8px;
+  color:var(--ink-dim);padding:.5rem .7rem;
+  font:500 .76rem/1 var(--sans);letter-spacing:.01em;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  box-shadow:var(--shadow);opacity:.35;transition:opacity .35s ease,color .2s;
+}
+body.uiHidden #uiShow{display:block}
+body.noShow   #uiShow{display:none !important}
+#uiShow:hover, #uiShow:focus-visible{opacity:1;color:var(--ink)}
+
+/* ---------- label pins ---------- */
+#pins{position:fixed;inset:0;z-index:12;pointer-events:none;overflow:hidden}
+.pin{
+  position:absolute;transform:translate(-50%,-100%);
+  pointer-events:auto;cursor:pointer;white-space:nowrap;
+  font:500 .7rem/1 var(--sans);letter-spacing:.02em;
+  color:var(--ink);background:var(--pinbg);
+  border:1px solid var(--edge);border-radius:20px;
+  padding:.24rem .55rem;
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  box-shadow:0 3px 12px rgba(0,0,0,.4);
+  transition:opacity .2s,background .15s,color .15s;
+}
+.pin:hover{background:rgba(216,182,103,.28);color:var(--gold-bright);border-color:var(--edge-strong)}
+.pin::after{
+  content:"";position:absolute;left:50%;bottom:-4px;width:1px;height:4px;
+  background:var(--edge-strong);
+}
+.pin.dim{opacity:.42}
+
+/* ---------- toast ---------- */
+#toast{
+  position:fixed;z-index:40;left:50%;top:70px;transform:translate(-50%,-14px);
+  background:var(--panel);border:1px solid var(--edge-strong);border-radius:8px;
+  padding:.5rem .85rem;font-size:.8rem;color:var(--ink);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  box-shadow:var(--shadow);opacity:0;pointer-events:none;
+  transition:opacity .3s,transform .3s;max-width:min(30rem,90vw);text-align:center;
+}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- the sheet handle (phones only) ---------- */
+.grab{display:none}
+
+@media (max-width:900px){
+  #rail{width:18rem}
+  #info{width:min(23rem,calc(100vw - 28px))}
+}
+
+/* ---------- phones: the panels become one bottom sheet -------------- *
+   A phone cannot hold a reading panel and the model at the same time.
+   Docking the rail at 44vh and the info card at 38vh left a strip of
+   model between them, so below 700px the rail stops being a panel with a
+   size and becomes a sheet with three heights: the tab strip alone, half
+   the screen, and nearly all of it. Peek is where it rests, so the model
+   owns the screen and the tabs are still one tap away—which is also why
+   there is no longer a button to summon the panel; the panel never
+   entirely leaves.
+
+   The info card takes the same three heights and stands in the rail's
+   place while it is up. Never two sheets, and never a split.
+
+   The dock has to give up the bottom edge for this, and goes to the top
+   corner opposite the title, where it is icon-only already.
+ * ------------------------------------------------------------------ */
+@media (max-width:700px){
+  #title{max-width:calc(100vw - 8.5rem)}
+  #hud{display:none}
+  #dock{
+    top:14px;right:14px;left:auto;bottom:auto;transform:none;
+    gap:0;padding:4px;
+  }
+  #dock button{padding:.42rem .5rem;font-size:.7rem}
+  #dock .lbl{display:none}
+  #dock .ico{margin-right:0}
+
+  #rail,#info{
+    left:0;right:0;bottom:0;top:auto;
+    width:auto;max-width:none;max-height:none;
+    /* the head's measured height, written back by the script: CSS cannot
+       transition to `auto`, and the resting height IS the head */
+    height:var(--peek,4.9rem);
+    border-radius:14px 14px 0 0;border-bottom-width:0;
+    transition:height .26s cubic-bezier(.32,.72,0,1);
+  }
+  #rail.d-half,#info.d-half{height:50vh}
+  #rail.d-full,#info.d-full{height:92vh}
+  /* under the finger the height is written directly, so it must not lag */
+  #rail.dragging,#info.dragging{transition:none}
+  body.sheetInfo #rail{display:none}
+
+  /* the panes fill what is left of the sheet and scroll inside it */
+  #rail .body,#info .ib{flex:1 1 auto;min-height:0}
+
+  .grab{
+    display:block;flex:0 0 auto;
+    padding:.75rem 0 .5rem;cursor:grab;touch-action:none;
+  }
+  .grab i{
+    display:block;width:2.4rem;height:4px;border-radius:2px;
+    margin:0 auto;background:var(--edge-strong);
+  }
+  #info .ih{padding-top:.15rem}
+}
+
+/* ---------- touch ----------------------------------------------------
+   Most of this is met on a phone, where there is no hover to reveal a
+   control and no keyboard behind it. Three things follow.
+
+   The interface starts hidden and H is what brings it back—and there is
+   no H on a phone, so #uiShow is the ONLY way in. It cannot be a faint
+   chip at a third opacity: on a coarse pointer it is opaque, full size,
+   and it drops the keyboard hint that means nothing there.
+
+   Everything that can be tapped gets 44 px, which is the smallest target
+   a finger hits reliably; the toggles, the tabs, the dock and the label
+   pins were all laid out for a mouse and none of them reached it.
+
+   And the panels scroll under a finger rather than under a wheel.
+ ------------------------------------------------------------------- */
+@media (pointer:coarse){
+  #uiShow{
+    opacity:.92; padding:.7rem 1rem; font-size:.9rem;
+    min-height:44px; right:12px; bottom:12px;
+    border-color:var(--edge-strong); color:var(--ink);
+  }
+  #uiShow .kb{display:none}
+  /* the handle is dragged, so it wants the same 44 px the taps get */
+  .grab{padding:1rem 0 .7rem}
+
+  #rail .tabs button{min-height:44px;font-size:.82rem}
+  #dock button{min-height:44px;padding:.5rem .7rem}
+  #info .x, .panel .x{min-width:44px;min-height:44px;font-size:1.3rem}
+
+  /* a toggle is a whole row, so the row is the target */
+  .tog{min-height:44px;padding:.55rem .4rem;font-size:.88rem}
+  .tog input{flex:0 0 42px;height:24px;border-radius:12px}
+  .tog input::after{width:20px;height:20px}
+  .tog input:checked::after{transform:translateX(18px)}
+  .tog .kbd{display:none}          /* no keyboard to press it with */
+
+  .passage{min-height:44px;padding:.55rem .6rem}
+  .item, .prose a{min-height:44px}
+  .pin{padding:.45rem .8rem;font-size:.76rem}
+
+  /* the slider needs a thumb a finger can find */
+  .slide input[type=range]{height:34px}
+  .slide input[type=range]::-webkit-slider-thumb{width:26px;height:26px}
+  .slide input[type=range]::-moz-range-thumb{width:26px;height:26px}
+
+  #rail, #info, .tabpage, .ib{-webkit-overflow-scrolling:touch}
+  /* the model is dragged, so nothing over it should select or callout */
+  body{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+  .prose, .ib{-webkit-user-select:text;user-select:text}
+}
+
+
+/* light-theme chrome (the 3-D scene is always its own daylight) */
+@media (prefers-color-scheme:light){
+  :root:not([data-theme=dark]){
+    --ink:#1d1a14;--ink-dim:#4a4335;--ink-faint:#7a7261;
+    --panel:rgba(250,247,240,.86);--panel-solid:#faf7f0;
+    --edge:rgba(60,50,30,.16);--edge-strong:rgba(60,50,30,.34);
+    --gold:#8a6410;--gold-bright:#6d4e08;--stone:#6b5c3e;
+    --shadow:0 10px 30px rgba(60,50,30,.2);
+    --knob:#7a7261; --pinbg:rgba(250,247,240,.86);
+    --thumbRing:#faf7f0;
+  }
+}
+:root[data-theme=light]{
+  --ink:#1d1a14;--ink-dim:#4a4335;--ink-faint:#7a7261;
+  --panel:rgba(250,247,240,.86);--panel-solid:#faf7f0;
+  --edge:rgba(60,50,30,.16);--edge-strong:rgba(60,50,30,.34);
+  --gold:#8a6410;--gold-bright:#6d4e08;--stone:#6b5c3e;
+  --shadow:0 10px 30px rgba(60,50,30,.2);
+}
+
+:root[data-theme=dark]{
+  --ink:#f2ece1;--ink-dim:#b9b0a0;--ink-faint:#8b8375;
+  --panel:rgba(18,16,13,.82);--panel-solid:#151310;
+  --edge:rgba(214,196,158,.20);--edge-strong:rgba(214,196,158,.42);
+  --gold:#d8b667;--gold-bright:#f0d493;--stone:#c8b28a;
+  --knob:#b9b0a0; --pinbg:rgba(18,16,13,.74);
+  --thumbRing:#1a1712;
+}
+</style>
+
+<div id="stage"><canvas id="gl"></canvas></div>
+<div id="pins"></div>
+
+<div id="hud">
+  <div id="compass" title="North">
+    <div class="needle" id="needle">
+      <svg viewBox="0 0 46 46" aria-hidden="true">
+        <circle cx="23" cy="23" r="17" fill="none" stroke="rgba(200,178,138,.28)" stroke-width="1"/>
+        <path d="M23 6 L27.5 23 L23 20 L18.5 23 Z" fill="#d8b667"/>
+        <path d="M23 40 L18.5 23 L23 26 L27.5 23 Z" fill="rgba(200,178,138,.4)"/>
+      </svg>
+    </div>
+  </div>
+  <div id="scalebar">
+    <div class="track" id="scaleTrack"></div>
+    <div class="lb" id="scaleLabel">100 m</div>
+  </div>
+</div>
+
+<div class="panel" id="title">
+  <h1>Herod&rsquo;s Temple Mount, Jerusalem</h1>
+  <div class="sub">c. <span class="sc">AD</span> 30 &middot; reconstruction</div>
+</div>
+
+<div class="panel" id="rail">
+  <div class="grab" aria-hidden="true"><i></i></div>
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true"  data-tab="passages">Passages</button>
+    <button role="tab" aria-selected="false" data-tab="plan">Plan</button>
+    <button role="tab" aria-selected="false" data-tab="view">View</button>
+    <button role="tab" aria-selected="false" data-tab="src">About</button>
+  </div>
+  <div class="body">
+
+    <div class="tabpage on" id="tab-passages">
+      <h2 class="sec">Where it happened</h2>
+      <p class="hint">The New Testament&rsquo;s Temple scenes are classified by how specifically
+      the text and architecture identify their locations. Many passages name only
+      &ldquo;the temple&rdquo;.</p>
+      <div class="conflegend">
+        <span><i class="c-explicit"></i>named</span>
+        <span><i class="c-probable"></i>narrowed</span>
+        <span><i class="c-court"></i>court only</span>
+        <span><i class="c-disputed"></i>disputed</span>
+      </div>
+      <div id="passageList"></div>
+    </div>
+
+    <div class="tabpage" id="tab-plan">
+      <h2 class="sec">Structures</h2>
+      <p class="hint">Select to fly there&mdash;or click any part of the model directly.</p>
+      <div id="planList"></div>
+    </div>
+
+    <div class="tabpage" id="tab-view">
+      <h2 class="sec">Cutaway &amp; layers</h2>
+      <label class="tog"><input type="checkbox" id="tRoofs" checked><span class="lb">Roofs &amp; ceilings</span><span class="kbd">R</span></label>
+      <label class="tog"><input type="checkbox" id="tSection"><span class="lb">Section the Sanctuary</span><span class="kbd">X</span></label>
+      <label class="tog"><input type="checkbox" id="tPeople" checked><span class="lb">Figures for scale</span><span class="kbd">P</span></label>
+      <label class="tog"><input type="checkbox" id="tCity" checked><span class="lb">Terrain &amp; valleys</span><span class="kbd">C</span></label>
+      <label class="tog"><input type="checkbox" id="tFire" checked><span class="lb">Fire &amp; smoke</span><span class="kbd">F</span></label>
+      <label class="tog"><input type="checkbox" id="tLabels" checked><span class="lb">Labels</span><span class="kbd">L</span></label>
+      <label class="tog"><input type="checkbox" id="tSquare"><span class="lb">Pre&#8209;Herodian 500&#8209;cubit square</span><span class="kbd">Q</span></label>
+      <label class="tog"><input type="checkbox" id="tGrid"><span class="lb">Cubit grid on esplanade</span><span class="kbd">G</span></label>
+
+      <h2 class="sec">Light</h2>
+      <div class="slide">
+        <label for="sSun">Time of day <b id="sunOut">10:00</b></label>
+        <input type="range" id="sSun" min="5.2" max="18.8" step="0.05" value="10">
+      </div>
+      <p class="hint" style="margin-top:-.2rem">Sun path is computed for Jerusalem (31.778&deg;N) at Passover, mid&#8209;April.</p>
+
+      <h2 class="sec">Movement</h2>
+      <p class="hint">
+        Drag to turn, wheel or pinch to zoom, right&#8209;drag or two&#8209;finger drag to pan.
+        Zooming in does not stop at the model: past the closest the pivot will come, it
+        carries on forward, through the colonnade and out the other side.
+        The arrows turn too; <code>Ctrl</code> with up and down moves in and out, and with
+        left and right slides sideways; <code>Shift</code> is faster&mdash;except while
+        this interface is up, where the arrows step the passages.<br>
+        <b>H</b> hides the interface, and brings it back.<br>
+        <b>V</b> copies a link to the current view.
+      </p>
+    </div>
+
+    <div class="tabpage" id="tab-src">
+      <div class="prose" id="srcBody"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="panel" id="info">
+  <div class="grab" aria-hidden="true"><i></i></div>
+  <div class="ih">
+    <div class="tt"><h3 id="infoTitle">&mdash;</h3><div class="k" id="infoKind"></div></div>
+    <button class="x" id="infoClose" aria-label="Close">&times;</button>
+  </div>
+  <div class="ib prose" id="infoBody"></div>
+</div>
+
+<div class="panel" id="dock">
+  <div class="seg">
+    <button id="bReset" title="Reset view"><span class="ico">&#8635;</span><span class="lbl">Reset</span></button>
+    <button id="bHide" title="Hide the interface (H)"><span class="ico">&#10005;</span><span class="lbl">Hide UI</span></button>
+  </div>
+</div>
+
+<button id="uiShow" title="Show the interface (H)">Interface<span class="kb"> &middot; H</span></button>
+
+<div id="toast"></div>
+
+<div id="boot">
+  <div class="inner">
+    <h1>Herod&rsquo;s Temple Mount</h1>
+    <p>Jerusalem, as a visitor would have seen it about <span class="sc">AD</span> 30</p>
+    <p class="credit">
+      Reconstructed from Mishnah <em>Middot</em>, Josephus, and the Temple Mount excavations
+    </p>
+    <div class="bar"><i id="bootBar"></i></div>
+    <div class="step" id="bootStep">starting&hellip;</div>
+  </div>
+</div>

@@ -1,0 +1,11 @@
+# Headless captures: large, regenerable with ./util/capture-all.sh
+captures/
+
+# Legacy capture output
+shots/
+
+# Reviewable export for the separate public repository
+dist/
+
+# scratch
+*.tmp
