@@ -1,5 +1,7 @@
 # Herod's Temple Mount
 
+[Live demo](https://www.openbible.info/labs/3d-temple-mount/) · [Blog post](https://www.openbible.info/blog/2026/07/clauding-an-interactive-3d-model-of-herods-temple/)
+
 This README is mostly AI-generated, as is all the code. It's designed mostly for bot consumption rather than human consumption.
 
 This project is an interactive, textured 3D model of the Temple Mount in Jerusalem circa AD 30, the setting of many New Testament events involving Jesus and Paul before its destruction in AD 70. It runs in a browser with no libraries, server, or network connection.
