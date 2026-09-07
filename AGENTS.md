@@ -362,6 +362,21 @@ Columns dominate—there are about 650 of them:
 
 **The altar follows Middot** (32 cubits square, 10 high), not Josephus's 50 × 50 × 15. Both figures appear in the panel.
 
+**Wall corners need one top surface.** Extending both perpendicular runs over
+the same corner closes the masonry but duplicates its top. Cycles showed six
+black patches at the courts' four outer corners and two dividing-wall joins.
+The north/south runs own the outer corners; east/west walls butt against their
+inner faces. The taller Nicanor wall owns the dividing joins. Chamber walls
+follow the same rule. `node util/verify-wall-joints.js` checks 22 junctions for
+exactly one surface. Fill beneath a paved roadway must similarly end inside
+the slab, not at its walking surface (Wilson's causeway).
+
+**Adjacent gate bays each own half their shared pier.** The Huldah jambs,
+arch rings, and spandrels stop at their bay boundaries. Wider surrounds plus
+a separate center pier duplicated their front surfaces, making a black line
+between dark entrances. `node util/verify-gate-joints.js` checks 24 points on
+the Double and Triple Gates for exactly one stone face.
+
 ## 13. Deliberately not done
 
 - **No collision.** The camera passes through walls. Often useful for inspection, but it is an absence, not a feature.

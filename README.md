@@ -1,6 +1,6 @@
 # Herod's Temple Mount
 
-[Live demo](https://www.openbible.info/labs/3d-temple-mount/) · [Blog post](https://www.openbible.info/blog/2026/07/clauding-an-interactive-3d-model-of-herods-temple/)
+[Live demo](https://www.openbible.info/labs/3d-temple-mount/) · [Blog post](https://www.openbible.info/blog/2026/07/clauding-an-interactive-3d-model-of-herods-temple/) · [Sketchfab](https://sketchfab.com/3d-models/herods-temple-mount-e21c525f14a3493c96a6500d132e0e89)
 
 This README is mostly AI-generated, as is all the code. It's designed mostly for bot consumption rather than human consumption.
 
@@ -8,7 +8,15 @@ This project is an interactive, textured 3D model of the Temple Mount in Jerusal
 
 ![Aerial overview of the Temple Mount reconstruction](img/temple-overview.jpg)
 
+*HTML/WebGL renderer.*
+
+![Matching overview rendered in Blender](img/temple-overview-blender.jpg)
+
+*Blender Cycles renderer, using the same camera and sun position.*
+
 Open `index.html` to run the model. The file is self-contained and can be opened from disk, placed on a static host, or served under a strict content-security policy without modification.
+
+For offline Cycles renders and a GLB for Sketchfab, see the [Blender rendering and export instructions](util/STILL.md). The export includes a camera, materials, and packed textures in an editable Blender scene.
 
 The model's dimensions draw on the Mishnah tractate *Middot*, Josephus, excavation reports, and stated reconstruction choices. Where the sources disagree, as they do on the altar, gate heights, and width of the Sanctuary, the relevant panel identifies the selected source and notes the variant. `node util/verify.js` checks about thirty geometric relationships and exits with a nonzero status if any check fails.
 
@@ -41,6 +49,12 @@ The sacred precinct has the soreg and its warning inscriptions; the chel and its
 The Sanctuary is a hundred cubits in each dimension. A gilded front carries four columns and the golden vine; the porch stands open, with no doors; the Hekhal has gold-plated doors with the Babylonian veil hanging before them. Inside are the menorah, the table of the Presence and the altar of incense, and behind two veils the empty Holy of Holies. Thirty-eight cells in three stories are visible when the building is sectioned.
 
 ![Aerial view of the sacred precinct, its courts, altar and Sanctuary](img/temple-center.jpg)
+
+*HTML/WebGL renderer.*
+
+![Matching view of the sacred precinct rendered in Blender](img/temple-center-blender.jpg)
+
+*Blender Cycles renderer, using the same camera and sun position.*
 
 The surrounding model includes the Antonia on its scarped rock at the northwest, aligned with the Temple's north wall. Josephus places the fortress at the junction of the northern and western porticoes and records passages to both. Ritmeyer interprets surviving beam sockets in the rockscarp as evidence for the northern portico. The reconstruction uses a roof-level connection consistent with those sources; the precise form of the access is not preserved. The surrounding terrain also includes the Struthion Pool and Pool of Israel, the Herodian street and its shops, the Kidron and Tyropoeon valleys, the western hill, and the Mount of Olives at their relative historical elevations. Hillside surfaces vary between soil and bedrock according to slope.
 
@@ -188,6 +202,24 @@ Because `index.html` is generated, make changes in `src/` and then run the build
 To change a dimension, update it in `40-data.js`. The geometry and the camera positions are both derived from it, so a corrected cubit moves the walls and the viewpoints together. Then run `node util/verify.js`, which reports if the change breaks one of the checked relationships in Middot.
 
 `AGENTS.md` documents the two coordinate frames, the layer system, and approximately ninety implementation invariants required to maintain consistent geometry.
+
+## Blender rendering and Sketchfab export
+
+The optional scripts in `util/` export the shared geometry and textures to
+Blender for Cycles stills and to a GLB for Sketchfab. The comparison images
+above use matching cameras and sun positions in the HTML and Blender renderers.
+
+**The shell scripts and documented commands assume WSL**, with Node available
+in WSL and Microsoft Edge and Blender installed on Windows. They use `wslpath`
+and Windows executable paths; the default Blender path targets version 5.2.
+`BLENDER_BIN` and `EDGE_BIN` can override those executable locations. The Python
+scripts run inside Blender, but other operating systems need adapted launch
+and browser-capture commands.
+
+See [the rendering and export instructions](util/STILL.md) for commands,
+dependencies, and the effects omitted from the GLB. Generated scenes, textures,
+and captures stay in the ignored `captures/` directory; the selected README
+images are in `img/`.
 
 ## License
 

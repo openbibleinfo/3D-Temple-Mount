@@ -225,13 +225,14 @@ function buildCourtWalls(B){
     };
 
     /* --- the north and south walls --------------------------------- */
-    /* Both runs are carried half a wall-thickness past the corners, so that
-       the corners come out solid instead of three-quarters filled. */
+    /* North/south runs own the outer corners. End walls stop at their inner
+       faces; the taller dividing wall owns its two junctions. Each exposed
+       wall top is covered once, without coplanar overlapping corner caps. */
     const azFrom = CT.x0 - cu(3), cwTo = CT.x1 + cu(3);
     for(const [zLine, sideName] of [[CT.z0,'north'],[CT.z1,'south']]){
       /* the Azarah stretch */
       wallOpen(B,'ashlarFine','base',{
-        from:[azFrom, zLine], to:[cu(AZ.x1), zLine], y0:ESP, y1:azTop,
+        from:[azFrom, zLine], to:[cu(AZ.x1)-cu(3), zLine], y0:ESP, y1:azTop,
         thick:cu(6), uv:1/9.6, ao:1, grad:0.16,
         /* Twenty cubits from the threshold you cross. The Azarah floor stands
            ten cubits higher than the Chel outside, and across a difference like
@@ -308,9 +309,9 @@ function buildCourtWalls(B){
 
     /* --- the eastern wall, with the outer eastern gate ------------- */
     wallOpen(B,'ashlarFine','base',{
-      from:[CT.x1, CT.z0], to:[CT.x1, CT.z1], y0:ESP, y1:cwTop,
+      from:[CT.x1, CT.z0+cu(3)], to:[CT.x1, CT.z1-cu(3)], y0:ESP, y1:cwTop,
       thick:cu(6), uv:1/9.6, ao:1, grad:0.16,
-      openings:[{at:AXIS-CT.z0, w:cu(14), h:cu(26), sill:cu(6)}]
+      openings:[{at:AXIS-CT.z0-cu(3), w:cu(14), h:cu(26), sill:cu(6)}]
     });
     B.part('easternGate',{name:'The eastern gate of the Court of the Women',
                           key:'nicanor', atLocal:[CT.x1+1, cu(30), AXIS]},()=>{
@@ -319,7 +320,7 @@ function buildCourtWalls(B){
     });
 
     /* --- the western wall of the Azarah ---------------------------- */
-    B.wall('ashlarFine','base',{from:[CT.x0,CT.z0],to:[CT.x0,CT.z1],
+    B.wall('ashlarFine','base',{from:[CT.x0,CT.z0+cu(3)],to:[CT.x0,CT.z1-cu(3)],
       y0:ESP,y1:azTop,thick:cu(6),uv:1/9.6,caps:false,ao:1,grad:0.16});
   });
 }
@@ -366,8 +367,8 @@ function buildCourtOfWomen(B){
       const dw = cu(8), dh = cu(16);          // a doorway, 8 by 16 cubits
       for(const [cx,cz,,use] of corners){
         /* Low enclosing walls only: the Mishnah says they were unroofed. Each
-           run is carried half a thickness past the corners—ends were left
-           uncapped before, which showed as open notches where two walls met—
+           north/south run owns its corners; east/west runs butt against its
+           inner faces, so the wall tops never overlap at the junctions—
            and each chamber is given a doorway off the court, on whichever of
            its two inner faces looks toward the middle of the court. */
         const t = cu(2), h = t/2;
@@ -378,8 +379,8 @@ function buildCourtOfWomen(B){
         const runs = [
           { from:[W-h,N], to:[E+h,N], door: inZ<0 },   // north face
           { from:[W-h,S], to:[E+h,S], door: inZ>0 },   // south face
-          { from:[W,N-h], to:[W,S+h], door: inX>0 },   // west face
-          { from:[E,N-h], to:[E,S+h], door: inX<0 },   // east face
+          { from:[W,N+h], to:[W,S-h], door: inX>0 },   // west face
+          { from:[E,N+h], to:[E,S-h], door: inX<0 },   // east face
         ];
         let placed=false;
         for(const r of runs){

@@ -545,8 +545,10 @@ function buildCity(B){
     for(let k=0;k<90 && groundLevel(ax, wz) < deck - 0.35; k++) ax -= 3;
     if(ax < west){
       const gLo = Math.min(groundLevel(west,wz), groundLevel(ax,wz)) - 2.0;
+      /* Bury the fill's top in the roadway slab. At deck height the ashlar
+         and paving were coplanar, producing black patches in Cycles. */
       B.box('ashlar','city',{x:(west+ax)/2, z:wz, y:gLo, sx:west-ax,
-                             sy:deck-gLo, sz:W, uv:0.22, ao:0.9, grad:0.24});
+                             sy:roadU-gLo+0.05, sz:W, uv:0.22, ao:0.9, grad:0.24});
     }
     /* the roadway, its parapets, and the aqueduct channel alongside */
     /* The roadway stops at the face of the retaining wall. Carried two meters
@@ -1784,6 +1786,11 @@ function buildHuldahGates(B){
            wall—jambs, a vault over them and the dark beyond—which is what
            the surviving domed bays of the Double Gate actually are. */
         const dep = 3.6, ow2 = bw*0.82;
+        /* Each bay owns exactly half the shared pier. Wider jambs/rings plus
+           a separate pier duplicated their front faces, producing a black
+           stripe between the doors in Cycles. The spandrels meet at the same
+           bay boundary, with no overlapping fronts above the springing. */
+        const ringTh = (bw-ow2)/2;
         /* THE PASSAGE IS DARK, all the way in. Set the dark 4.7 m back behind a
            lit reveal and the gate read as a wall with recesses in it; a Huldah
            gate opens on a vaulted passage running north under the Royal Stoa,
@@ -1815,10 +1822,10 @@ function buildHuldahGates(B){
                                 uv:0.5});
         /* the reveal: side walls and a barrel over them, right through */
         for(const sd of [-1,1])
-          B.box('ashlarFine','base',{x:x+sd*(ow2/2+0.5), z:zf-dep/2-0.2, y:sill,
-            sx:1.0, sy:spring-sill, sz:dep, uv:0.4, ao:0.9, grad:0.12});
+          B.box('ashlarFine','base',{x:x+sd*(ow2/2+ringTh/2), z:zf-dep/2-0.2, y:sill,
+            sx:ringTh, sy:spring-sill, sz:dep, uv:0.4, ao:0.9, grad:0.12});
         B.arch('ashlarFine','base',{x, z:zf-dep/2-0.2, y:spring, span:ow2,
-                                    thick:0.95, depth:dep, axis:'x', seg:10,
+                                    thick:ringTh, depth:dep, axis:'x', seg:10,
                                     uv:0.4});
         /* AND THE SPANDRELS. Bare rings here read as cut paper—daylight over
            every haunch between the ring and the molding it carries—which is
@@ -1828,13 +1835,8 @@ function buildHuldahGates(B){
            reveal, which the molding covers only at the face. Sliced round the
            ring, so nothing intrudes into the passage. */
         archSpandrel(B,'ashlarFine','base',{x, z:zf-dep/2-0.2, y:spring,
-          span:ow2, thick:0.95, depth:dep, axis:'x', seg:10, deckY:crown+0.95,
+          span:ow2, thick:ringTh, depth:dep, axis:'x', seg:10, deckY:crown+ringTh,
           uv:0.4, ao:0.98});
-        /* the pier between bays */
-        if(i<nBays-1)
-          B.box('ashlarFine','base',{x:x+bw/2, z:zf-dep/2-0.2, y:sill,
-                                     sx:bw*0.18, sy:spring-sill, sz:dep,
-                                     uv:0.4, ao:0.9});
       }
       /* a molded frame round the whole opening */
       B.box('ashlarFine','base',{x:cx, z:zf-0.1, y:crown,
